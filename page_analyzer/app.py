@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request, redirect, \
     url_for, flash, abort
-from .database import get_all_urls, get_url_by_name, \
-    get_url_by_id, insert_url, insert_check, \
-    get_checks_by_url_id
+from .database import get_all_urls, get_last_check, get_url_by_name, \
+    get_url_by_id, insert_url, insert_check, get_checks_by_url_id
 from urllib.parse import urlparse
+import requests
 
 
 def normalize_url(url):
@@ -26,7 +26,20 @@ def index():
 @app.get("/urls")
 def urls_get():
     urls = get_all_urls()
-    return render_template("urls/index.html", urls=urls)
+
+    urls_with_checks = []
+    for url in urls:
+        last_check = get_last_check(url["id"])
+        url_info = {
+            "id": url["id"],
+            "name": url["name"],
+            "created_at": url["created_at"],
+            "last_check": url["last_check"],
+            "status_code": last_check["status_code"] if last_check else None
+        }
+        urls_with_checks.append(url_info)
+
+    return render_template("urls/index.html", urls=urls_with_checks)
 
 
 @app.post("/urls")
@@ -64,6 +77,15 @@ def check_url(id):
     if url is None:
         abort(404)
 
-    insert_check(id)
+    try:
+        response = requests.get(
+            url["name"]
+        )
+        status_code = response.status_code
+    except requests.exceptions.RequestException as e:
+        flash("Произошла ошибка при проверке", "error")
+        return redirect(url_for("show_url", id=id))
+
+    insert_check(id, status_code)
     flash("Страница успешно проверена", "success")
     return redirect(url_for("show_url", id=id))

@@ -62,12 +62,18 @@ VALUES (%s, %s) RETURNING id;",
             return new_id
 
 
-def get_all_cheks():
+def get_last_check(url_id):
+    """Возвращает последнюю проверку для заданного URL."""
     with get_connection() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-            cur.execute("SELECT id, url_id, status_code, h1, title, \
-created_at FROM url_checks ORDER BY id DESC;")
-            return cur.fetchall()
+            cur.execute("""
+                SELECT id, status_code, h1, title, description, created_at
+                FROM url_checks
+                WHERE url_id = %s
+                ORDER BY created_at DESC, id DESC
+                LIMIT 1;
+            """, (url_id,))
+            return cur.fetchone()
 
 
 def get_checks_by_url_id(url_id):
@@ -83,14 +89,14 @@ def get_checks_by_url_id(url_id):
             return cur.fetchall()
 
 
-def insert_check(url_id):
+def insert_check(url_id, status_code):
     """Создаёт новую запись проверки для заданного URL."""
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO url_checks (url_id, created_at) \
-                 VALUES (%s, %s) RETURNING id;",
-                (url_id, datetime.utcnow().date())
+                "INSERT INTO url_checks (url_id, status_code, created_at) \
+                 VALUES (%s, %s, %s) RETURNING id;",
+                (url_id, status_code, datetime.utcnow().date())
             )
             new_id = cur.fetchone()[0]
             conn.commit()
