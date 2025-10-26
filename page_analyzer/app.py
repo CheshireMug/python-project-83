@@ -4,6 +4,7 @@ from .database import get_all_urls, get_last_check, get_url_by_name, \
     get_url_by_id, insert_url, insert_check, get_checks_by_url_id
 from urllib.parse import urlparse
 import requests
+from bs4 import BeautifulSoup
 
 
 def normalize_url(url):
@@ -86,6 +87,23 @@ def check_url(id):
         flash("Произошла ошибка при проверке", "error")
         return redirect(url_for("show_url", id=id))
 
-    insert_check(id, status_code)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    h1_tag = soup.find('h1')
+    title_tag = soup.find('title')
+    meta_tag = soup.find('meta', attrs={'name': 'description'})
+    if h1_tag:
+        h1 = h1_tag.get_text()
+    else:
+        h1 = ''
+    if title_tag:
+        title = title_tag.get_text()
+    else:
+        title = ''
+    if meta_tag and meta_tag.get('content'):
+        description = meta_tag['content']
+    else:
+        description = ''
+
+    insert_check(id, h1, title, description, status_code)
     flash("Страница успешно проверена", "success")
     return redirect(url_for("show_url", id=id))

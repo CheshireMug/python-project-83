@@ -89,14 +89,18 @@ def get_checks_by_url_id(url_id):
             return cur.fetchall()
 
 
-def insert_check(url_id, status_code):
+def insert_check(url_id, h1, title, description, status_code):
     """Создаёт новую запись проверки для заданного URL."""
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO url_checks (url_id, status_code, created_at) \
-                 VALUES (%s, %s, %s) RETURNING id;",
-                (url_id, status_code, datetime.utcnow().date())
+                "INSERT INTO url_checks (url_id, status_code, \
+                    h1, title, description, created_at) \
+                 VALUES (%s, %s, %s, %s, %s, %s) RETURNING id;",
+                (
+                    url_id, status_code, h1, title,
+                    description, datetime.utcnow().date()
+                    )
             )
             new_id = cur.fetchone()[0]
             conn.commit()
