@@ -5,6 +5,7 @@ from .database import get_all_urls, get_last_check, get_url_by_name, \
 from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
+from validators import url as validate_url
 
 
 def normalize_url(url):
@@ -47,6 +48,13 @@ def urls_get():
 def urls_post():
     url_name = request.form.get("url", "").strip()
 
+    if not validate_url(url_name):
+        flash('Некорректный URL', 'danger')
+        return render_template(
+            "index.html",
+            url=url_name
+        ), 422
+
     if not url_name:
         return redirect(url_for("index"))
 
@@ -84,7 +92,7 @@ def check_url(id):
         )
         status_code = response.status_code
     except requests.exceptions.RequestException as e:
-        flash("Произошла ошибка при проверке", "error")
+        flash("Произошла ошибка при проверке", "danger")
         return redirect(url_for("show_url", id=id))
 
     soup = BeautifulSoup(response.text, 'html.parser')
