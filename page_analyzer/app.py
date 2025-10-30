@@ -36,7 +36,7 @@ def urls_get():
             "id": url["id"],
             "name": url["name"],
             "created_at": url["created_at"],
-            "last_check": url["last_check"],
+            "last_check": last_check["created_at"] if last_check else None,
             "status_code": last_check["status_code"] if last_check else None
         }
         urls_with_checks.append(url_info)
