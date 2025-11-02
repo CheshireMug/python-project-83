@@ -1,6 +1,7 @@
 .venv/
 .mypy_cache/
 __pycache__/
+page_analyzer/__pycache__/
 .env
 
 todo.md
