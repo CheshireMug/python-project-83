@@ -91,7 +91,8 @@ def check_url(id):
             url["name"]
         )
         status_code = response.status_code
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException:
+        insert_check(id, None, None, None, None)
         flash("Произошла ошибка при проверке", "danger")
         return redirect(url_for("show_url", id=id))
 
